@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.vbj.automate</groupId>
 	<artifactId>browser</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1</version>
 	<name>browser</name>
 	<description>Automate Browser</description>
 	<properties>

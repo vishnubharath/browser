@@ -1,11 +1,13 @@
 package com.vbj.automate.browser;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -15,35 +17,43 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import com.vbj.automate.browser.model.Slot;
 
 @SpringBootApplication
+@EnableScheduling
 public class BrowserApplication implements CommandLineRunner {
 
 	private static List<Slot> slots = new ArrayList<Slot>();
+	private static String arg_0 = "C:\\dev\\softwares\\webdriver\\chromedriver_win32\\chromedriver.exe";
 
 	public static void main(String[] args) {
 		SpringApplication.run(BrowserApplication.class, args);
 	}
 
-	@Override
+	@Override	
 	public void run(String... args) throws Exception {
+
+		arg_0 = args[0];
+		if (args.length == 0) {
+			System.setProperty("webdriver.chrome.driver",
+					arg_0);
+		} else {
+			System.setProperty("webdriver.chrome.driver", arg_0);
+		}		
+		schedule();
+	}
+
+	private void schedule() throws InterruptedException, SAXException, IOException, ParserConfigurationException {
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
-		
-		slots.add(new Slot("LOCATION :-","DAY :-","AVAILABLE :-"));
-
-		if (args.length == 0) {
-			System.setProperty("webdriver.chrome.driver",
-					"C:\\dev\\softwares\\webdriver\\chromedriver_win32\\chromedriver.exe");
-		} else {
-			System.setProperty("webdriver.chrome.driver", args[0]);
-		}
 		WebDriver driver = new ChromeDriver();
 		driver.get(DriveTestConstants.DRIVETEST);
 		Util.waitForPageLoad(driver);
@@ -82,7 +92,7 @@ public class BrowserApplication implements CommandLineRunner {
 		Util.waitAndClickCss(driver, ".locationLineBlock");
 		List<WebElement> elements = driver.findElements(By.cssSelector(".locationLineBlock"));
 		for (int i = 0; i < elements.size(); i++) {
-			System.out.println(driver.findElements(By.cssSelector(".locationLineBlock")).get(i).getText());
+			System.out.println("\n"+ driver.findElements(By.cssSelector(".locationLineBlock")).get(i).getText());
 			int elementPosition = driver.findElements(By.cssSelector(".locationLineBlock")).get(i).getLocation().getY();
 			String js = String.format("window.scroll(0, %s)", elementPosition - 100);
 			((JavascriptExecutor) driver).executeScript(js);
@@ -91,9 +101,7 @@ public class BrowserApplication implements CommandLineRunner {
 			js = String.format("window.scroll(0, %s)", elementPosition - 100);
 			((JavascriptExecutor) driver).executeScript(js);
 
-			Thread.sleep(1000);
-			driver.findElements(By.cssSelector(".locationLineBlock")).get(i).click();
-			Thread.sleep(3000);
+			Thread.sleep(1000);			
 			Util.waitAndClickElement(driver, driver.findElements(By.cssSelector(".locationLineBlock")).get(i));
 			Thread.sleep(1000);
 			List<WebElement> continueButton = driver.findElements(By.cssSelector(".booking-submit"));
@@ -114,45 +122,38 @@ public class BrowserApplication implements CommandLineRunner {
 							driver.findElements(By.cssSelector(".locationLineBlock")).get(i).getText().split("\n")[0],
 							date.getText() + " " + driver.findElements(By.cssSelector(".calendar-header")).get(0).getText().trim(), nList.item(0).getTextContent().split(" ")[0]);
 					slots.add(slot);
-					System.out.println(slot);
-					Util.prettyPrint(slots);
+					//System.out.println(slot);
+					Util.getTable(slots);
 				}
 			}
 			
 			// .calendar-header :nth-child(3)
-			//driver.findElements(By.cssSelector(".calendar-header :nth-child(3)")).get(0).click();
-			//Thread.sleep(3000);
+			driver.findElements(By.cssSelector(".calendar-header :nth-child(3)")).get(0).click();
+			Thread.sleep(3000);
 			// Collect Data 2
-			/*
 			dates = driver.findElements(By.cssSelector(".date-link"));
 			for (WebElement date : dates) {
-				System.out.println(date.findElement(By.cssSelector(".appointmentNotice")).getAttribute("innerHTML"));
-
+				
 				Document document = builder.parse(new InputSource(new StringReader(
 						date.findElement(By.cssSelector(".appointmentNotice")).getAttribute("innerHTML"))));
 				NodeList nList = document.getElementsByTagName("div");
-				System.out.println(nList.item(0).getTextContent().split(" ")[0]);
-
+				
 				if (!date.getAttribute("class").contains("disabled")) {
 					Slot slot = new Slot(
 							driver.findElements(By.cssSelector(".locationLineBlock")).get(i).getText().split("\n")[0],
 							date.getText() + " " + driver.findElements(By.cssSelector(".calendar-header")).get(0).getText().trim(), nList.item(0).getTextContent().split(" ")[0]);
 					slots.add(slot);
-					System.out.println(slot);
-					Util.prettyPrint(slots);
+					//System.out.println(slot);
+					Util.getTable(slots);
 				}
 			}
-			
-			*/
 
 		}
 
-		System.out.println("-->");
-		System.out.println(Util.prettyPrint(slots));
+		Util.getTable(slots);		
+		Util.sendEmail(Util.getTableHTML(slots));
 		
-		Util.sendEmail(Util.getTable(slots));
-		
-
+		driver.close();
 	}
 
 }

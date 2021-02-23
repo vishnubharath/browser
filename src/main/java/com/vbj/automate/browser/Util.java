@@ -3,6 +3,7 @@ package com.vbj.automate.browser;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Properties;
 
@@ -39,7 +40,7 @@ public class Util {
 
 		return true;
 	}
-	
+
 	public static boolean waitAndClickCss(WebDriver driver, String cssSelector) {
 		System.out.println("Waiting for " + cssSelector);
 		new WebDriverWait(driver, 10000).until(webDriver -> driver.findElement(By.cssSelector(cssSelector)));
@@ -53,11 +54,11 @@ public class Util {
 
 		return true;
 	}
-	
+
 	public static boolean waitAndClickElement(WebDriver driver, WebElement element) {
-		System.out.println("Waiting for " + element);
+		//System.out.println("Waiting for " + element);
 		new WebDriverWait(driver, 10000).until(webDriver -> element);
-		System.out.println("Found " + element);
+		//System.out.println("Found " + element);
 		try {
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
@@ -73,28 +74,29 @@ public class Util {
 				.executeScript("return document.readyState").equals("complete"));
 		return true;
 	}
-	
-	public static boolean waitAndCompare(WebDriver driver, String xPath, String compareText) throws InterruptedException {
+
+	public static boolean waitAndCompare(WebDriver driver, String xPath, String compareText)
+			throws InterruptedException {
 		new WebDriverWait(driver, 10000).until(webDriver -> driver.findElement(By.xpath(xPath)));
-        while(driver.findElement(By.xpath(xPath)) != null) {
-        	System.out.println(driver.findElement(By.xpath(xPath)).getText());
-        	if(driver.findElement(By.xpath(xPath)).getText() != null && 
-        			driver.findElement(By.xpath(xPath)).getText().equalsIgnoreCase(compareText)) {
-                driver.findElement(By.xpath(xPath)).click();
-                break;
-        	}else {
-        		System.out.println("Wating for element " + xPath);
-                Thread.sleep(1000);
-        	}
-        }
-        
-        return true;
+		while (driver.findElement(By.xpath(xPath)) != null) {
+			System.out.println(driver.findElement(By.xpath(xPath)).getText());
+			if (driver.findElement(By.xpath(xPath)).getText() != null
+					&& driver.findElement(By.xpath(xPath)).getText().equalsIgnoreCase(compareText)) {
+				driver.findElement(By.xpath(xPath)).click();
+				break;
+			} else {
+				System.out.println("Wating for element " + xPath);
+				Thread.sleep(1000);
+			}
+		}
+
+		return true;
 	}
-	
+
 	public static String prettyPrint(List<Slot> slots) {
-		
+
 		StringBuilder prettyString = new StringBuilder();
-		
+
 		int locationMax = 0;
 		int availableMax = 0;
 		int daysMax = 0;
@@ -102,12 +104,12 @@ public class Util {
 			locationMax = findMax(locationMax, slot.location);
 			availableMax = findMax(availableMax, slot.available);
 			daysMax = findMax(daysMax, slot.available);
-			
+
 		}
 		System.out.println(locationMax);
 		System.out.println(availableMax);
 		System.out.println(daysMax);
-		
+
 		// Print Table
 //	
 //		System.out.print(String.format("%-" + locationMax + "s", "LOCATION :-"));
@@ -117,100 +119,119 @@ public class Util {
 //		prettyString.append(String.format("%-" + locationMax + "s", "LOCATION :-"));
 //		prettyString.append(String.format("%-" + daysMax + "s", "DAY :-"));
 //		prettyString.append(String.format("%-" + availableMax + "s", "AVAILABLE :-") + "\n");
-		
+
 		for (Slot slot : slots) {
 			System.out.print(String.format("%-" + locationMax + "s", slot.location));
 			System.out.print(String.format("%-" + daysMax + "s", slot.day) + "\n");
-			//System.out.print(String.format("%-" + availableMax + "s", slot.available));
+			// System.out.print(String.format("%-" + availableMax + "s", slot.available));
 			System.out.println();
-			
+
 			prettyString.append(String.format("%-" + locationMax + "s", slot.location));
 			prettyString.append(String.format("%-" + daysMax + "s", slot.day) + "\n");
-			//prettyString.append(String.format("%-" + availableMax + "s", slot.available) + "\n");
+			// prettyString.append(String.format("%-" + availableMax + "s", slot.available)
+			// + "\n");
 		}
-		
+
 		return prettyString.toString();
 	}
-	
-	public static String getTable(List<Slot> slots){
-		String[] columnNames = {"location", "days"};
+
+	public static String getTable(List<Slot> slots) {
+		String[] columnNames = { "location", "days" };
 		Object[][] slotsx = new String[slots.size()][2];
-		for(int i =0;i < slots.size(); i++) {
+		for (int i = 0; i < slots.size(); i++) {
 			slotsx[i][0] = slots.get(i).location;
 			slotsx[i][1] = slots.get(i).day;
 		}
-		
-		
-		
+
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		TextTable tt = new TextTable(columnNames, slotsx);
+		//tt.printTable();
 		tt.setAddRowNumbering(true);
 		tt.printTable(new PrintStream(outputStream), 0);
-		
-        String output = null;
-        try {
-            output = outputStream.toString("utf-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-		
-        System.out.println(output);
-        
-        return output;
+
+		String output = null;
+		try {
+			output = outputStream.toString("utf-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println(output);
+
+		return output;
+	}
+
+	public static String getTableHTML(List<Slot> slots) {
+		String[] columnNames = { "location", "days" };
+		Object[][] slotsx = new String[slots.size()][2];
+
+		StringBuilder table = new StringBuilder();
+		table.append("<table>");
+		table.append("<tr>");
+		table.append("<th>Location</th>");
+		table.append("<th>Date</th>");
+		table.append("</tr>");
+
+		for (int i = 0; i < slots.size(); i++) {
+			slotsx[i][0] = slots.get(i).location;
+			slotsx[i][1] = slots.get(i).day;
+			table.append("<tr>");
+			table.append("<td>" + slots.get(i).location + "</td>");
+			table.append("<td>" + slots.get(i).day + "</td>");
+			table.append("</tr>");
+		}
+		table.append("</table>");
+
+		return table.toString();
 	}
 
 	public static int findMax(int maxSize, String val) {
-		if(val.contains("\n")) {
+		if (val.contains("\n")) {
 			String[] snippets = val.split("\n");
-			int maxsizesnippet = 0;				 
-			for(String snippet : snippets ) {
-				if(snippet.length() > maxsizesnippet)
+			int maxsizesnippet = 0;
+			for (String snippet : snippets) {
+				if (snippet.length() > maxsizesnippet)
 					maxsizesnippet = snippet.length();
 			}
 			maxSize = maxsizesnippet;
-		}else {
+		} else {
 			if (val.length() > maxSize)
 				maxSize = val.length();
 		}
 		return maxSize;
 	}
-	
+
 	public static void sendEmail(String table) {
 		final String username = "maxapplog@gmail.com";
 
-        Properties prop = new Properties();
-        prop.put("mail.smtp.host", "smtp.gmail.com");
-        final String password = "noispasswordneeded";
-        prop.put("mail.smtp.port", "587");
-        prop.put("mail.smtp.auth", "true");
-        prop.put("mail.smtp.starttls.enable", "true"); //TLS
-        
-        Session session = Session.getInstance(prop,
-                new javax.mail.Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(username, password);
-                    }
-                });
+		Properties prop = new Properties();
+		prop.put("mail.smtp.host", "smtp.gmail.com");
+		final String password = "noispasswordneeded";
+		prop.put("mail.smtp.port", "587");
+		prop.put("mail.smtp.auth", "true");
+		prop.put("mail.smtp.starttls.enable", "true"); // TLS
 
-        try {
+		Session session = Session.getInstance(prop, new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		});
 
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress("maxapplog@gmail.com"));
-            message.setRecipients(
-                    Message.RecipientType.TO,
-                    InternetAddress.parse("vishnubharathj@gmail.com")
-            );
-            message.setSubject("Drive Test Availability");
-			message.setText("time stamp \n" +
-            table);
+		try {
 
-            Transport.send(message);
+			Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress("maxapplog@gmail.com"));
+			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("vishnubharathj@gmail.com"));
+			message.setSubject("G Test Availability");
+			message.setContent(new Timestamp(System.currentTimeMillis()) + "<br><br>" + table, "text/html");
 
-            System.out.println("Done");
+			Transport.send(message);
 
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        }
-    }
-	
+			System.out.println("Done");
+
+		} catch (MessagingException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
